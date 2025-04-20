@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["hello_world"]
+members = ["hello_macroquad"]
 
 [workspace.dependencies]
 macroquad = "0.4.14"
