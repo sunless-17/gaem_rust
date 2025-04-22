@@ -9,13 +9,14 @@ struct Shape {
     speed: f32,
     x: f32,
     y: f32,
-    // collided: bool,
+    collided: bool,
 }
 impl Shape {
     // register collisions
     fn collides_with(&self, other: &Self) -> bool {
         self.rect().overlaps(&other.rect())
     }
+    // wtf?
     fn rect(&self) -> Rect {
         Rect {
             x: self.x - self.size / 2.0,
@@ -26,7 +27,7 @@ impl Shape {
     }
 }
 
-#[macroquad::main("flappy")]
+#[macroquad::main("bullet_hell")]
 async fn main() {
     // time per frame, usefull in adjusting stuffs per frame
     let delta_time = get_frame_time();
@@ -39,11 +40,17 @@ async fn main() {
         // - 50.0 bottom
         x: screen_width() / 2.0,
         y: screen_height() / 2.0,
-        // collided: false,
+        collided: false,
     };
 
     // enemy squares
-    let mut squares = Vec::new();
+    let mut squares = vec![];
+
+    // default game not over
+    let mut gameover = false;
+
+    // bullets
+    let mut bullets = vec![];
 
     // repeat frames infinitely
     loop {
@@ -58,16 +65,36 @@ async fn main() {
                 speed: rand::gen_range(50.0, 150.0),
                 x: rand::gen_range(size / 2.0, screen_width() - size / 2.0),
                 y: -size,
-                // collided: false,
+                collided: false,
             });
         }
+        // debug production of the enemies
         println!("{:?}", squares);
 
-        // // bullets
-        // let mut bullets = vec![];
+        // shooting player
+        if is_key_pressed(KeyCode::Space) {
+            bullets.push(Shape {
+                x: circle.x,
+                y: circle.y,
+                speed: circle.speed * 2.0,
+                size: 5.0,
+                collided: false,
+            });
+        }
 
-        // default game not over
-        let mut gameover = false;
+        // change struct collided value of squares and bullet
+        for square in squares.iter_mut() {
+            for bullet in bullets.iter_mut() {
+                if bullet.collides_with(square) {
+                    bullet.collided = true;
+                    square.collided = true;
+                }
+            }
+        }
+
+        // check bullet collision and remove the square
+        squares.retain(|square| !square.collided);
+        bullets.retain(|bullet| !bullet.collided);
 
         // check collision
         // TODO: check circle
@@ -91,7 +118,7 @@ async fn main() {
         // reset game
         if gameover && is_key_pressed(KeyCode::Space) {
             squares.clear();
-            // bullets.clear();
+            bullets.clear();
             circle.x = screen_width() / 2.0;
             circle.y = screen_height() / 2.0;
             gameover = false;
@@ -116,10 +143,10 @@ async fn main() {
             for square in &mut squares {
                 square.y += square.speed * delta_time;
             }
-            // // bullet movement
-            // for bullet in &mut bullets {
-            //     bullet.y -= bullet.speed * delta_time;
-            // }
+            // bullet movement
+            for bullet in &mut bullets {
+                bullet.y -= bullet.speed * delta_time;
+            }
         }
 
         // drawing player
@@ -137,40 +164,16 @@ async fn main() {
             );
         }
 
-        // // shooting player
-        // if is_key_pressed(KeyCode::Space) {
-        //     bullets.push(Shape {
-        //         x: circle.x,
-        //         y: circle.y,
-        //         speed: circle.speed * 2.0,
-        //         size: 5.0,
-        //         collided: false,
-        //     });
-        // }
-        // // change struct collided value of squares and bullet
-        // for square in squares.iter_mut() {
-        //     for bullet in bullets.iter_mut() {
-        //         if bullet.collides_with(square) {
-        //             bullet.collided = true;
-        //             square.collided = true;
-        //         }
-        //     }
-        // }
-
         // drawing bullets
         // TODO: draw circle lines for outline
         // TODO: reloading time
-        // for bullet in &bullets {
-        //     draw_circle(bullet.x, bullet.y, bullet.size / 2.0, RED);
-        // }
-
-        // // check bullet collision
-        // squares.retain(|square| !square.collided);
-        // bullets.retain(|bullet| !bullet.collided);
+        for bullet in &bullets {
+            draw_circle(bullet.x, bullet.y, bullet.size / 2.0, RED);
+        }
 
         // checks whether the values in the vector will be kept (if the y ordinates are less, will be cleaned)
         squares.retain(|square| square.y < screen_height() + square.size);
-        // bullets.retain(|bullet| bullet.y > 0.0 - bullet.size / 2.0);
+        bullets.retain(|bullet| bullet.y > 0.0 - bullet.size / 2.0);
 
         // the size of the player is never zero (avoid going off-screen)
         circle.x = clamp(circle.x, 0.0, screen_width());
