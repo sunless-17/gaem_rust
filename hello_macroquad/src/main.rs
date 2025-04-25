@@ -1,3 +1,4 @@
+use macroquad::experimental::animation::{AnimatedSprite, Animation};
 use macroquad::prelude::*;
 use std::fs;
 
@@ -59,6 +60,18 @@ async fn main() {
 
     // saving scores
     let mut score: u32 = 0;
+
+    // load assets
+    set_pc_assets_folder("assets");
+    let ship_texture: Texture2D = load_texture("ship.png").await.expect(
+        "Couldn't load 
+file",
+    );
+    ship_texture.set_filter(FilterMode::Nearest);
+    let bullet_texture: Texture2D = load_texture("laser-bolts.png")
+        .await
+        .expect("Couldn't load file");
+    bullet_texture.set_filter(FilterMode::Nearest);
 
     // repeat frames infinitely
     loop {
