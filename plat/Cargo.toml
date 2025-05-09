@@ -1,0 +1,11 @@
+[package]
+name = "plat"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+macroquad.workspace = true
+macroquad-particles.workspace = true
+
+[profile.dev.package.'*']
+opt-level = 3
